@@ -1,14 +1,31 @@
 import AppKit
 import SwiftUI
+import ServiceManagement
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     var floatingWindow: NSWindow?
     var statusItem: NSStatusItem?
     var usageStore = UsageStore()
 
+    var launchAtLogin: Bool {
+        get { SMAppService.mainApp.status == .enabled }
+        set {
+            do {
+                if newValue {
+                    try SMAppService.mainApp.register()
+                } else {
+                    try SMAppService.mainApp.unregister()
+                }
+            } catch {
+                print("Launch at login error: \(error)")
+            }
+        }
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupFloatingWidget()
         setupMenuBarItem()
+        usageStore.requestNotificationPermission()
     }
 
     func setupFloatingWidget() {
@@ -16,7 +33,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             .environmentObject(usageStore)
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 120, height: 44),
+            contentRect: NSRect(x: 0, y: 0, width: 180, height: 66),
             styleMask: [.borderless],
             backing: .buffered,
             defer: false
@@ -32,7 +49,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Position bottom-right corner
         if let screen = NSScreen.main {
-            let x = screen.visibleFrame.maxX - 140
+            let x = screen.visibleFrame.maxX - 200
             let y = screen.visibleFrame.minY + 20
             window.setFrameOrigin(NSPoint(x: x, y: y))
         }

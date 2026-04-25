@@ -1,4 +1,5 @@
 import SwiftUI
+import ServiceManagement
 
 struct SettingsView: View {
     @EnvironmentObject var store: UsageStore
@@ -8,7 +9,10 @@ struct SettingsView: View {
     @State private var manualPercent: Double = 0
     @State private var useManual: Bool = false
     @State private var showCookieHelp = false
-    @State private var pollingInterval: Double = 60
+    @State private var launchAtLogin: Bool = SMAppService.mainApp.status == .enabled
+    @AppStorage("alertThreshold") private var alertThreshold: Double = 0.85
+    @AppStorage("newChatTarget") private var newChatTarget: String = "web"
+    @AppStorage("pushcutWebhookURL") private var pushcutWebhookURL: String = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -36,6 +40,24 @@ struct SettingsView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
+
+                    // MARK: General Section
+                    SectionHeader(title: "General", icon: "gearshape")
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        Toggle("Launch at login", isOn: $launchAtLogin)
+                            .font(.system(size: 13))
+                            .onChange(of: launchAtLogin) { enabled in
+                                let delegate = NSApp.delegate as? AppDelegate
+                                delegate?.launchAtLogin = enabled
+                            }
+
+                        Text("Start Claude Gauge automatically when your Mac boots.")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(14)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary.opacity(0.08)))
 
                     // MARK: Live Data Section
                     SectionHeader(title: "Live Data", icon: "wifi")
@@ -92,19 +114,92 @@ struct SettingsView: View {
                             }
                         }
 
-                        Text("Polling every \(Int(pollingInterval))s")
+                        Toggle("Smart polling", isOn: $store.smartPollingEnabled)
+                            .font(.system(size: 13))
+                            .onChange(of: store.smartPollingEnabled) { enabled in
+                                UserDefaults.standard.set(enabled, forKey: "smart_polling_enabled")
+                                if enabled {
+                                    store.reschedulePolling()
+                                } else {
+                                    store.startPolling(interval: 60)
+                                }
+                            }
+
+                        if store.smartPollingEnabled {
+                            Text("Polling every \(Int(store.smartPollingInterval))s  •  Adapts to usage level")
+                                .font(.system(size: 11))
+                                .foregroundColor(.secondary)
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("70%+  →  every 30s")
+                                Text("40–70%  →  every 60s")
+                                Text("< 40%  →  every 5 min")
+                            }
+                            .font(.system(size: 10, design: .monospaced))
+                            .foregroundColor(.secondary)
+                        } else {
+                            Text("Fixed polling every 60s")
+                                .font(.system(size: 11))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .padding(14)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary.opacity(0.08)))
+
+                    // MARK: Notifications & Actions Section
+                    SectionHeader(title: "Notifications & Actions", icon: "bell.badge")
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Alert threshold: \(Int(alertThreshold * 100))%")
+                            .font(.system(size: 13, weight: .medium))
+
+                        Slider(value: $alertThreshold, in: 0.40...1.0, step: 0.05)
+
+                        Text("You'll get a sound + notification when 5-hour usage crosses this level.")
                             .font(.system(size: 11))
                             .foregroundColor(.secondary)
 
-                        HStack {
-                            Text("30s")
-                                .font(.system(size: 10))
-                                .foregroundColor(.secondary)
-                            Slider(value: $pollingInterval, in: 30...300, step: 30)
-                            Text("5m")
-                                .font(.system(size: 10))
-                                .foregroundColor(.secondary)
+                        Divider()
+
+                        Text("Open new chat in")
+                            .font(.system(size: 13, weight: .medium))
+
+                        Picker("", selection: $newChatTarget) {
+                            Text("Claude Web").tag("web")
+                            Text("Claude Desktop").tag("desktop")
                         }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
+
+                        Text("Claude Desktop option opens the app — start a new chat manually")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(14)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary.opacity(0.08)))
+
+                    // MARK: iPhone Notification Section
+                    SectionHeader(title: "iPhone Notification", icon: "iphone.badge.play")
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Pushcut Webhook URL")
+                            .font(.system(size: 13, weight: .medium))
+
+                        TextField("https://api.pushcut.io/...", text: $pushcutWebhookURL)
+                            .textFieldStyle(.roundedBorder)
+                            .font(.system(size: 12, design: .monospaced))
+
+                        HStack(spacing: 8) {
+                            Button("Send Test") {
+                                store.firePushcutWebhook()
+                            }
+                            .buttonStyle(.bordered)
+                            .disabled(pushcutWebhookURL.isEmpty)
+                        }
+
+                        Text("Create a notification in the Pushcut app, then paste its webhook URL here")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
                     }
                     .padding(14)
                     .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary.opacity(0.08)))
@@ -159,7 +254,7 @@ struct SettingsView: View {
                 .padding(20)
             }
         }
-        .frame(width: 400, height: 580)
+        .frame(width: 400, height: 750)
         .onAppear {
         cookieInput = store.sessionCookie
         manualPercent = store.usagePercent
