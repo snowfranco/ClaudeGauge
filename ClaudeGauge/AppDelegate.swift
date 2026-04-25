@@ -42,7 +42,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.level = .floating
         window.backgroundColor = .clear
         window.isOpaque = false
-        window.hasShadow = true
+        window.hasShadow = false
         window.isMovableByWindowBackground = true
         window.collectionBehavior = [.canJoinAllSpaces, .stationary]
         window.contentView = NSHostingView(rootView: contentView)

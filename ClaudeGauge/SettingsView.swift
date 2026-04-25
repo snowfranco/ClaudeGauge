@@ -9,10 +9,11 @@ struct SettingsView: View {
     @State private var manualPercent: Double = 0
     @State private var useManual: Bool = false
     @State private var showCookieHelp = false
-    @State private var launchAtLogin: Bool = SMAppService.mainApp.status == .enabled
+    @State private var launchAtLogin: Bool = false
     @AppStorage("alertThreshold") private var alertThreshold: Double = 0.85
     @AppStorage("newChatTarget") private var newChatTarget: String = "web"
     @AppStorage("pushcutWebhookURL") private var pushcutWebhookURL: String = ""
+    @AppStorage("widgetTheme") private var widgetTheme: String = "newui"
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -48,13 +49,46 @@ struct SettingsView: View {
                         Toggle("Launch at login", isOn: $launchAtLogin)
                             .font(.system(size: 13))
                             .onChange(of: launchAtLogin) { enabled in
-                                let delegate = NSApp.delegate as? AppDelegate
-                                delegate?.launchAtLogin = enabled
+                                let service = SMAppService.mainApp
+                                print("[LaunchAtLogin] Toggle changed to: \(enabled)")
+                                print("[LaunchAtLogin] Current status before: \(service.status.rawValue)")
+                                print("[LaunchAtLogin] Bundle ID: \(Bundle.main.bundleIdentifier ?? "nil")")
+                                print("[LaunchAtLogin] Bundle path: \(Bundle.main.bundlePath)")
+                                do {
+                                    if enabled {
+                                        try service.register()
+                                        print("[LaunchAtLogin] register() succeeded")
+                                    } else {
+                                        try service.unregister()
+                                        print("[LaunchAtLogin] unregister() succeeded")
+                                    }
+                                    print("[LaunchAtLogin] Status after: \(service.status.rawValue)")
+                                } catch {
+                                    print("[LaunchAtLogin] FAILED: \(error)")
+                                    print("[LaunchAtLogin] Error domain: \((error as NSError).domain)")
+                                    print("[LaunchAtLogin] Error code: \((error as NSError).code)")
+                                    print("[LaunchAtLogin] Status after failure: \(service.status.rawValue)")
+                                    // Revert toggle to actual system state
+                                    launchAtLogin = service.status == .enabled
+                                }
                             }
 
                         Text("Start Claude Gauge automatically when your Mac boots.")
                             .font(.system(size: 11))
                             .foregroundColor(.secondary)
+
+                        Divider()
+
+                        Text("Theme")
+                            .font(.system(size: 13, weight: .medium))
+
+                        Picker("", selection: $widgetTheme) {
+                            Text("New UI").tag("newui")
+                            Text("Clean").tag("clean")
+                            Text("Dark").tag("dark")
+                        }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
                     }
                     .padding(14)
                     .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary.opacity(0.08)))
@@ -244,7 +278,7 @@ struct SettingsView: View {
 
                     VStack(spacing: 6) {
                         ColorLegendRow(color: Color(hex: "#22C55E"), range: "0–39%",  label: "Good — work freely")
-                        ColorLegendRow(color: Color(hex: "#EAB308"), range: "40–69%", label: "Moderate — consider new chat")
+                        ColorLegendRow(color: Color(hex: "#F5A400"), range: "40–69%", label: "Moderate — consider new chat")
                         ColorLegendRow(color: Color(hex: "#F97316"), range: "70–84%", label: "High — switch to Sonnet")
                         ColorLegendRow(color: Color(hex: "#EF4444"), range: "85–100%",label: "Critical — start fresh now")
                     }
@@ -256,8 +290,9 @@ struct SettingsView: View {
         }
         .frame(width: 400, height: 750)
         .onAppear {
-        cookieInput = store.sessionCookie
-        manualPercent = store.usagePercent
+            cookieInput = store.sessionCookie
+            manualPercent = store.usagePercent
+            launchAtLogin = SMAppService.mainApp.status == .enabled
         }
         .sheet(isPresented: $showCookieHelp) {
             CookieHelpView()
@@ -267,7 +302,7 @@ struct SettingsView: View {
     func colorForPercent(_ p: Double) -> Color {
         switch p {
         case 0..<40:  return Color(hex: "#22C55E")
-        case 40..<70: return Color(hex: "#EAB308")
+        case 40..<70: return Color(hex: "#F5A400")
         case 70..<85: return Color(hex: "#F97316")
         default:      return Color(hex: "#EF4444")
         }

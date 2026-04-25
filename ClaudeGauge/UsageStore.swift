@@ -1,6 +1,29 @@
 import SwiftUI
 import Combine
 import UserNotifications
+import AppKit
+
+// MARK: - Usage Severity State
+
+enum UsageSeverity: Int, Comparable {
+    case low = 0      // 0–39%
+    case mid = 1      // 40–69%
+    case high = 2     // 70–84%
+    case critical = 3 // 85–100%
+
+    static func < (lhs: UsageSeverity, rhs: UsageSeverity) -> Bool {
+        lhs.rawValue < rhs.rawValue
+    }
+
+    static func from(percent: Double) -> UsageSeverity {
+        switch percent {
+        case 0..<40:  return .low
+        case 40..<70: return .mid
+        case 70..<85: return .high
+        default:      return .critical
+        }
+    }
+}
 
 class UsageStore: ObservableObject {
     @Published var usagePercent: Double = 0.0       // 5-hour window utilization (primary)
@@ -15,11 +38,11 @@ class UsageStore: ObservableObject {
     @Published var isDetectingOrg: Bool = false
     @Published var cookieExpired: Bool = false
 
-    // MARK: - Computed: Color based on 5-hour window
+    // MARK: - Computed: Color based on 5-hour window (fixed, never themed)
     var gaugeColor: Color {
         switch usagePercent {
         case 0..<40:   return Color(hex: "#22C55E")
-        case 40..<70:  return Color(hex: "#EAB308")
+        case 40..<70:  return Color(hex: "#F5A400")
         case 70..<85:  return Color(hex: "#F97316")
         default:       return Color(hex: "#EF4444")
         }
@@ -116,6 +139,14 @@ class UsageStore: ObservableObject {
 
     /// Tracks whether the Pushcut reset webhook has already fired for this cycle
     private var hasNotifiedReset: Bool = false
+
+    /// Previous severity state for transition sound detection
+    private var previousSeverity: UsageSeverity? = nil
+
+    /// Whether sounds are muted (reads from UserDefaults so SettingsView can control it)
+    private var isMuted: Bool {
+        UserDefaults.standard.bool(forKey: "muteSounds")
+    }
 
     /// The alert threshold as a percentage (0–100). Reads from UserDefaults, defaults to 85.
     private var alertThresholdPercent: Double {
@@ -386,6 +417,9 @@ class UsageStore: ObservableObject {
         // Check Pushcut reset notification
         checkResetNotification()
 
+        // Check for upward severity transition sounds
+        checkSeverityTransitionSound()
+
         print("[ClaudeGauge] utilization: \(usagePercent)")
 
         // Update previous utilization for next poll comparison
@@ -449,6 +483,33 @@ class UsageStore: ObservableObject {
         let webhookURL = UserDefaults.standard.string(forKey: "pushcutWebhookURL") ?? ""
         guard !webhookURL.isEmpty, let url = URL(string: webhookURL) else { return }
         URLSession.shared.dataTask(with: url) { _, _, _ in }.resume()
+    }
+
+    // MARK: - Severity Transition Sounds
+
+    private func checkSeverityTransitionSound() {
+        let current = UsageSeverity.from(percent: usagePercent)
+
+        guard let previous = previousSeverity else {
+            // First poll after launch — record state, no sound
+            previousSeverity = current
+            return
+        }
+
+        defer { previousSeverity = current }
+
+        // Only play on upward transitions
+        guard current > previous else { return }
+        guard !isMuted else { return }
+
+        switch current {
+        case .mid, .high:
+            NSSound(named: "Pop")?.play()
+        case .critical:
+            NSSound(named: "Glass")?.play()
+        case .low:
+            break
+        }
     }
 
     // MARK: - Shared request builder

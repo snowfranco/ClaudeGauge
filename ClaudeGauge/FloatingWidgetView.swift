@@ -76,13 +76,18 @@ struct ReconnectPillView: View {
 
 struct CompactPillView: View {
     @EnvironmentObject var store: UsageStore
+    @AppStorage("widgetTheme") private var themeName: String = "newui"
 
     var body: some View {
+        let accent = store.gaugeColor
+        let theme = ThemeConfig.named(themeName)
+        let shadow = theme.pillShadow(accent)
+
         HStack(spacing: 12) {
-            // Animated pulse dot (white on colored background)
+            // Animated pulse dot
             ZStack {
                 Circle()
-                    .fill(Color.white.opacity(0.3))
+                    .fill(theme.pillDotGlowColor(accent))
                     .frame(width: 30, height: 30)
                     .scaleEffect(store.usagePercent > 70 ? 1.3 : 1.0)
                     .animation(
@@ -93,32 +98,40 @@ struct CompactPillView: View {
                     )
 
                 Circle()
-                    .fill(Color.white)
+                    .fill(theme.pillDotColor(accent))
                     .frame(width: 18, height: 18)
             }
 
             Text("\(Int(store.usagePercent))%")
                 .font(.system(size: 20, weight: .semibold, design: .monospaced))
-                .foregroundColor(.white)
+                .foregroundColor(theme.pillTextColor(accent))
 
             if let weeklyLabel = store.weeklyWarningLabel {
                 Text(weeklyLabel)
                     .font(.system(size: 11, weight: .bold, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.85))
+                    .foregroundColor(theme.pillTextColor(accent).opacity(0.85))
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
                     .background(
-                        Capsule().fill(Color.white.opacity(0.2))
+                        Capsule().fill(theme.pillTextColor(accent).opacity(0.15))
                     )
             }
         }
         .padding(.horizontal, 21)
         .padding(.vertical, 15)
         .background(
-            RoundedRectangle(cornerRadius: 33)
-                .fill(store.gaugeColor)
+            RoundedRectangle(cornerRadius: theme.pillCornerRadius)
+                .fill(theme.pillBackground(accent))
         )
-        .shadow(color: store.gaugeColor.opacity(0.4), radius: 12, x: 0, y: 6)
+        .overlay(
+            Group {
+                if let border = theme.pillBorder(accent) {
+                    RoundedRectangle(cornerRadius: theme.pillCornerRadius)
+                        .strokeBorder(border.color, lineWidth: border.width)
+                }
+            }
+        )
+        .shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
     }
 }
 
@@ -129,22 +142,27 @@ struct ExpandedView: View {
     @Binding var showSettings: Bool
     @Binding var showPreflight: Bool
     @AppStorage("newChatTarget") private var newChatTarget: String = "web"
+    @AppStorage("widgetTheme") private var themeName: String = "newui"
 
     var body: some View {
+        let accent = store.gaugeColor
+        let theme = ThemeConfig.named(themeName)
+        let badge = theme.badgeStyle(accent)
+
         VStack(alignment: .leading, spacing: 15) {
 
             // Header row
             HStack {
                 Text("Claude Gauge")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(theme.headerTextColor)
 
                 Spacer()
 
                 Button(action: { openNewChat() }) {
                     Image(systemName: "plus.bubble")
                         .font(.system(size: 16))
-                        .foregroundColor(store.gaugeColor)
+                        .foregroundColor(accent)
                 }
                 .buttonStyle(.plain)
                 .help("New Chat")
@@ -152,7 +170,7 @@ struct ExpandedView: View {
                 Button(action: { showPreflight = true }) {
                     Image(systemName: "checklist.checked")
                         .font(.system(size: 16))
-                        .foregroundColor(store.gaugeColor)
+                        .foregroundColor(accent)
                 }
                 .buttonStyle(.plain)
                 .help("Preflight")
@@ -160,7 +178,7 @@ struct ExpandedView: View {
                 Button(action: { showSettings = true }) {
                     Image(systemName: "gearshape")
                         .font(.system(size: 16))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(theme.headerTextColor)
                 }
                 .buttonStyle(.plain)
             }
@@ -169,21 +187,21 @@ struct ExpandedView: View {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text("\(Int(store.usagePercent))")
                     .font(.system(size: 54, weight: .bold, design: .monospaced))
-                    .foregroundColor(store.gaugeColor)
+                    .foregroundColor(accent)
 
                 Text("%")
                     .font(.system(size: 27, weight: .medium))
-                    .foregroundColor(store.gaugeColor.opacity(0.7))
+                    .foregroundColor(accent.opacity(0.7))
 
                 Spacer()
 
                 Text(store.gaugeLabel)
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(store.gaugeColor)
+                    .foregroundColor(badge.textColor)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 5)
                     .background(
-                        Capsule().fill(store.gaugeColor.opacity(0.15))
+                        Capsule().fill(badge.bgColor)
                     )
             }
 
@@ -191,11 +209,11 @@ struct ExpandedView: View {
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 4.5)
-                        .fill(Color.white.opacity(0.1))
+                        .fill(theme.progressTrackColor)
                         .frame(height: 9)
 
                     RoundedRectangle(cornerRadius: 4.5)
-                        .fill(store.gaugeColor)
+                        .fill(accent)
                         .frame(width: geo.size.width * (store.usagePercent / 100), height: 9)
                         .animation(.spring(response: 0.5), value: store.usagePercent)
                 }
@@ -204,7 +222,7 @@ struct ExpandedView: View {
 
             // Primary risk block (shown at 40%+ or weekly danger)
             if store.usagePercent >= 40 || store.isWeeklyDanger {
-                let riskColor = store.isWeeklyDanger ? store.effectiveColor : store.gaugeColor
+                let riskColor = store.isWeeklyDanger ? store.effectiveColor : accent
 
                 VStack(alignment: .leading, spacing: 6) {
                     Text(store.guidanceBody)
@@ -224,27 +242,27 @@ struct ExpandedView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(
                     RoundedRectangle(cornerRadius: 10)
-                        .fill(riskColor.opacity(0.1))
+                        .fill(theme.riskCardBackground(riskColor))
                 )
             }
 
-            Divider().background(Color.white.opacity(0.1))
+            Divider().opacity(0.3)
 
             // Metadata rows
             HStack {
                 Image(systemName: "calendar")
                     .font(.system(size: 13))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(theme.metadataTextColor)
                 Text("7-day: \(Int(store.weeklyPercent))%")
                     .font(.system(size: 13, design: .monospaced))
-                    .foregroundColor(store.isWeeklyDanger ? store.effectiveColor : .secondary)
+                    .foregroundColor(store.isWeeklyDanger ? store.effectiveColor : theme.metadataTextColor)
 
                 Spacer()
 
                 if let updated = store.lastUpdated {
                     Text(timeAgo(updated))
                         .font(.system(size: 13))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(theme.metadataTextColor)
                 } else if store.errorMessage != nil {
                     Text("No data")
                         .font(.system(size: 13))
@@ -255,28 +273,27 @@ struct ExpandedView: View {
             HStack(spacing: 6) {
                 Image(systemName: "clock.arrow.circlepath")
                     .font(.system(size: 13))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(theme.metadataTextColor)
                 Text(store.timeUntilReset)
                     .font(.system(size: 13))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(theme.metadataTextColor)
             }
         }
         .padding(21)
         .frame(width: 330)
         .background(
-            ZStack {
-                RoundedRectangle(cornerRadius: 24)
-                    .fill(.ultraThinMaterial)
-                RoundedRectangle(cornerRadius: 24)
-                    .fill(store.gaugeColor.opacity(0.15))
-            }
-            .overlay(
-                RoundedRectangle(cornerRadius: 24)
-                    .strokeBorder(store.gaugeColor.opacity(0.25), lineWidth: 1)
-            )
+            RoundedRectangle(cornerRadius: theme.cardCornerRadius)
+                .fill(theme.cardBackground(accent))
         )
-        .shadow(color: .black.opacity(0.3), radius: 24, x: 0, y: 12)
-        .shadow(color: store.gaugeColor.opacity(0.15), radius: 30, x: 0, y: 0)
+        .overlay(
+            Group {
+                if let border = theme.cardBorder(accent) {
+                    RoundedRectangle(cornerRadius: theme.cardCornerRadius)
+                        .strokeBorder(border.color, lineWidth: border.width)
+                }
+            }
+        )
+        .modifier(MultiShadow(shadows: theme.cardShadow(accent)))
     }
 
     func timeAgo(_ date: Date) -> String {

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		807C2A8D2F9D2D11008DAC64 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 807C2A8C2F9D2500008DAC64 /* Assets.xcassets */; };
 		A001 /* ClaudeGaugeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001 /* ClaudeGaugeApp.swift */; };
 		A002 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B002 /* AppDelegate.swift */; };
 		A003 /* UsageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B003 /* UsageStore.swift */; };
@@ -16,6 +17,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		807C2A8C2F9D2500008DAC64 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B001 /* ClaudeGaugeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeGaugeApp.swift; sourceTree = "<group>"; };
 		B002 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		B003 /* UsageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageStore.swift; sourceTree = "<group>"; };
@@ -26,13 +28,32 @@
 		PROD /* ClaudeGauge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClaudeGauge.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFrameworksBuildPhase section */
+		FRAMEWORKBUILD /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
 /* Begin PBXGroup section */
 		MAINGROUP = {
 			isa = PBXGroup;
 			children = (
 				SRCGROUP /* ClaudeGauge */,
+				807C2A8C2F9D2500008DAC64 /* Assets.xcassets */,
 				PRODGROUP /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		PRODGROUP /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				PROD /* ClaudeGauge.app */,
+			);
+			name = Products;
 			sourceTree = "<group>";
 		};
 		SRCGROUP /* ClaudeGauge */ = {
@@ -49,20 +70,12 @@
 			path = ClaudeGauge;
 			sourceTree = "<group>";
 		};
-		PRODGROUP /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				PROD /* ClaudeGauge.app */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
 		TARGET /* ClaudeGauge */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = BUILDCONFIGLIST;
+			buildConfigurationList = BUILDCONFIGLIST /* Build configuration list for PBXNativeTarget "ClaudeGauge" */;
 			buildPhases = (
 				SOURCEBUILD /* Sources */,
 				FRAMEWORKBUILD /* Frameworks */,
@@ -92,7 +105,7 @@
 					};
 				};
 			};
-			buildConfigurationList = PROJBUILDCONFIGLIST;
+			buildConfigurationList = PROJBUILDCONFIGLIST /* Build configuration list for PBXProject "ClaudeGauge" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -110,6 +123,17 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		RESOURCESBUILD /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				807C2A8D2F9D2D11008DAC64 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		SOURCEBUILD /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -125,26 +149,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXFrameworksBuildPhase section */
-		FRAMEWORKBUILD /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXFrameworksBuildPhase section */
-
-/* Begin PBXResourcesBuildPhase section */
-		RESOURCESBUILD /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXResourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
 		DEBUGCONFIG /* Debug */ = {
@@ -245,8 +249,9 @@
 		TARGETDEBUG /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcons;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = ClaudeGauge/ClaudeGauge.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -259,7 +264,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.yourname.claudegauge";
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourname.claudegauge;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -269,8 +274,9 @@
 		TARGETRELEASE /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcons;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = ClaudeGauge/ClaudeGauge.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -283,7 +289,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.yourname.claudegauge";
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourname.claudegauge;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -293,15 +299,6 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		PROJBUILDCONFIGLIST /* Build configuration list for PBXProject "ClaudeGauge" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				DEBUGCONFIG /* Debug */,
-				RELEASECONFIG /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		BUILDCONFIGLIST /* Build configuration list for PBXNativeTarget "ClaudeGauge" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -311,8 +308,16 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		PROJBUILDCONFIGLIST /* Build configuration list for PBXProject "ClaudeGauge" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DEBUGCONFIG /* Debug */,
+				RELEASECONFIG /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
-
 	};
 	rootObject = PROJECT /* Project object */;
 }
