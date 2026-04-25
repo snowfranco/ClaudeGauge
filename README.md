@@ -1,6 +1,9 @@
 # ClaudeGauge 🟢
 
 A lightweight macOS app that shows your Claude.ai usage in real time — right on your screen.
+<img width="329" height="242" alt="Screenshot 2026-04-25 at 6 05 08 PM" src="https://github.com/user-attachments/assets/39eb87c0-9497-4985-b983-99a31fd61473" />
+<img width="124" height="66" alt="Screenshot 2026-04-25 at 6 05 16 PM" src="https://github.com/user-attachments/assets/5c840361-40e6-430a-833b-d5a98c12cd9d" />
+
 
 ---
 
