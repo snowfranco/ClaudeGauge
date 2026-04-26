@@ -83,6 +83,23 @@ ClaudeGauge/
 - Works without login using demo mode  
 
 ---
+##Get Notifications on your phone when your Usage limit resets
+On your iPhone
+1. Download Pushcut from the App Store if you don't have it
+2. Open Pushcut → tap Notifications → tap + to create a new one
+3. Name it something clear, e.g. Claude Reset
+4. Optionally customize the message body, e.g. "Your Claude usage window has reset — you're good to go"
+5. Tap into the notification → find the Webhook URL and copy it. It'll look like https://api.pushcut.io/abc123xyz/notifications/Claude%20Reset
+
+
+In ClaudeGauge (Settings)
+1. Open the widget settings
+2. Scroll to the new iPhone Notification section
+3. Paste the webhook URL into the text field
+4. Tap Send Test — your iPhone (and Watch if paired) should buzz within a few seconds
+5. If it fires, you're set
+
+---
 
 ## 🔮 Roadmap
 
@@ -90,4 +107,5 @@ ClaudeGauge/
 - Usage history graph  
 - Time-to-recovery estimates  
 - Smart usage recommendations  
-- Themes  
+- Themes
+- In-app notifications
