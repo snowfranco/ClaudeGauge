@@ -29,11 +29,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func setupFloatingWidget() {
-        let contentView = FloatingWidgetView()
+        let swiftUIView = FloatingWidgetView()
             .environmentObject(usageStore)
 
+        let hostingView = NSHostingView(rootView: swiftUIView)
+
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 180, height: 66),
+            contentRect: NSRect(x: 0, y: 0, width: 400, height: 400),
             styleMask: [.borderless],
             backing: .buffered,
             defer: false
@@ -45,11 +47,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.hasShadow = false
         window.isMovableByWindowBackground = true
         window.collectionBehavior = [.canJoinAllSpaces, .stationary]
-        window.contentView = NSHostingView(rootView: contentView)
+        window.contentView = hostingView
 
         // Position bottom-right corner
         if let screen = NSScreen.main {
-            let x = screen.visibleFrame.maxX - 200
+            let x = screen.visibleFrame.maxX - 420
             let y = screen.visibleFrame.minY + 20
             window.setFrameOrigin(NSPoint(x: x, y: y))
         }

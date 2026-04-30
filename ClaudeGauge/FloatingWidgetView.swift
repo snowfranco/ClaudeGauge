@@ -3,6 +3,7 @@ import SwiftUI
 struct FloatingWidgetView: View {
     @EnvironmentObject var store: UsageStore
     @State private var isHovered = false
+    @State private var isLocked = false
     @State private var showSettings = false
     @State private var showPreflight = false
 
@@ -14,21 +15,24 @@ struct FloatingWidgetView: View {
                         insertion: .scale(scale: 0.8).combined(with: .opacity),
                         removal: .scale(scale: 0.8).combined(with: .opacity)
                     ))
-            } else if isHovered {
-                ExpandedView(showSettings: $showSettings, showPreflight: $showPreflight)
+            } else if isLocked || isHovered {
+                ExpandedView(showSettings: $showSettings, showPreflight: $showPreflight, isLocked: $isLocked)
                     .transition(.asymmetric(
                         insertion: .scale(scale: 0.8).combined(with: .opacity),
                         removal: .scale(scale: 0.8).combined(with: .opacity)
                     ))
+                    .onTapGesture { isLocked.toggle() }
             } else {
                 CompactPillView()
                     .transition(.asymmetric(
                         insertion: .scale(scale: 0.8).combined(with: .opacity),
                         removal: .scale(scale: 0.8).combined(with: .opacity)
                     ))
+                    .onTapGesture { isLocked = true }
             }
         }
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isHovered)
+        .fixedSize()
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isLocked || isHovered)
         .animation(.spring(response: 0.3, dampingFraction: 0.7), value: store.cookieExpired)
         .onHover { hovering in
             isHovered = hovering
@@ -105,20 +109,46 @@ struct CompactPillView: View {
             Text("\(Int(store.usagePercent))%")
                 .font(.system(size: 20, weight: .semibold, design: .monospaced))
                 .foregroundColor(theme.pillTextColor(accent))
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
 
+            // Status badge in pill
             if let weeklyLabel = store.weeklyWarningLabel {
+                let badgeColor = store.weeklyPercent >= 86 ? Color(hex: "#EF4444") : accent
                 Text(weeklyLabel)
                     .font(.system(size: 11, weight: .bold, design: .monospaced))
-                    .foregroundColor(theme.pillTextColor(accent).opacity(0.85))
+                    .foregroundColor(badgeColor)
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
                     .background(
-                        Capsule().fill(theme.pillTextColor(accent).opacity(0.15))
+                        Capsule().fill(badgeColor.opacity(0.12))
+                    )
+            } else if themeName == "clean" || themeName == "dark" {
+                Text(store.gaugeLabel)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(accent)
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(
+                        Capsule().fill(accent.opacity(themeName == "dark" ? 0.15 : 0.10))
+                    )
+                    .overlay(
+                        Group {
+                            if themeName == "dark" {
+                                Capsule()
+                                    .strokeBorder(accent.opacity(0.4), lineWidth: 1)
+                            }
+                        }
                     )
             }
         }
         .padding(.horizontal, 21)
         .padding(.vertical, 15)
+        .fixedSize()
         .background(
             RoundedRectangle(cornerRadius: theme.pillCornerRadius)
                 .fill(theme.pillBackground(accent))
@@ -141,6 +171,7 @@ struct ExpandedView: View {
     @EnvironmentObject var store: UsageStore
     @Binding var showSettings: Bool
     @Binding var showPreflight: Bool
+    @Binding var isLocked: Bool
     @AppStorage("newChatTarget") private var newChatTarget: String = "web"
     @AppStorage("widgetTheme") private var themeName: String = "newui"
 
@@ -156,6 +187,7 @@ struct ExpandedView: View {
                 Text("Claude Gauge")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(theme.headerTextColor)
+                    .onTapGesture { isLocked = false }
 
                 Spacer()
 
@@ -203,6 +235,14 @@ struct ExpandedView: View {
                     .background(
                         Capsule().fill(badge.bgColor)
                     )
+                    .overlay(
+                        Group {
+                            if themeName == "dark" {
+                                Capsule()
+                                    .strokeBorder(accent.opacity(0.4), lineWidth: 1)
+                            }
+                        }
+                    )
             }
 
             // Progress bar
@@ -227,7 +267,7 @@ struct ExpandedView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(store.guidanceBody)
                         .font(.system(size: 14))
-                        .foregroundColor(.primary.opacity(0.85))
+                        .foregroundColor(themeName == "dark" ? Color.white.opacity(0.85) : .primary.opacity(0.85))
 
                     HStack(spacing: 6) {
                         Image(systemName: "arrow.right.circle.fill")
@@ -248,35 +288,68 @@ struct ExpandedView: View {
 
             Divider().opacity(0.3)
 
-            // Metadata rows
-            HStack {
-                Image(systemName: "calendar")
-                    .font(.system(size: 13))
-                    .foregroundColor(theme.metadataTextColor)
-                Text("7-day: \(Int(store.weeklyPercent))%")
-                    .font(.system(size: 13, design: .monospaced))
-                    .foregroundColor(store.isWeeklyDanger ? store.effectiveColor : theme.metadataTextColor)
-
-                Spacer()
-
-                if let updated = store.lastUpdated {
-                    Text(timeAgo(updated))
-                        .font(.system(size: 13))
+            // Footer metadata row — 3 columns: Resets in · Weekly · Updated
+            HStack(spacing: 0) {
+                // Col 1: Resets in
+                VStack(spacing: 2) {
+                    Text("Resets in")
+                        .font(.system(size: 9))
                         .foregroundColor(theme.metadataTextColor)
-                } else if store.errorMessage != nil {
-                    Text("No data")
-                        .font(.system(size: 13))
-                        .foregroundColor(.orange)
+                    Text(store.resetCountdown)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(themeName == "dark" ? .white : .primary)
+                        .lineLimit(1)
+                    Text("5-hr window")
+                        .font(.system(size: 9))
+                        .foregroundColor(theme.metadataTextColor)
                 }
-            }
+                .frame(maxWidth: .infinity)
 
-            HStack(spacing: 6) {
-                Image(systemName: "clock.arrow.circlepath")
-                    .font(.system(size: 13))
-                    .foregroundColor(theme.metadataTextColor)
-                Text(store.timeUntilReset)
-                    .font(.system(size: 13))
-                    .foregroundColor(theme.metadataTextColor)
+                // Col 2: Weekly
+                VStack(spacing: 2) {
+                    Text("Weekly")
+                        .font(.system(size: 9))
+                        .foregroundColor(theme.metadataTextColor)
+                    HStack(spacing: 2) {
+                        Text("\(Int(store.weeklyPercent))%")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(store.isWeeklyDanger ? store.effectiveColor : (themeName == "dark" ? .white : .primary))
+                        Text("·")
+                            .font(.system(size: 12))
+                            .foregroundColor(theme.metadataTextColor)
+                        Text(store.weeklyTimeUntilReset)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(themeName == "dark" ? .white : .primary)
+                    }
+                    .lineLimit(1)
+                    Text("7-day window")
+                        .font(.system(size: 9))
+                        .foregroundColor(theme.metadataTextColor)
+                }
+                .frame(maxWidth: .infinity)
+
+                // Col 3: Updated
+                VStack(spacing: 2) {
+                    Text("Updated")
+                        .font(.system(size: 9))
+                        .foregroundColor(theme.metadataTextColor)
+                    if let updated = store.lastUpdated {
+                        Text(timeAgo(updated))
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(themeName == "dark" ? .white : .primary)
+                    } else if store.errorMessage != nil {
+                        Text("No data")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.orange)
+                    } else {
+                        Text("—")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(theme.metadataTextColor)
+                    }
+                    Text(" ")
+                        .font(.system(size: 9))
+                }
+                .frame(maxWidth: .infinity)
             }
         }
         .padding(21)
@@ -374,8 +447,8 @@ struct PreflightView: View {
 
             VStack(alignment: .leading, spacing: 14) {
 
-                Text("Paste your next prompt to check risk before sending.")
-                    .font(.system(size: 12))
+                Text("Should I send this?")
+                    .font(.system(size: 13, weight: .medium))
                     .foregroundColor(.secondary)
 
                 TextEditor(text: $promptText)
@@ -408,49 +481,53 @@ struct PreflightView: View {
                     }
                 }
 
-                // Result card
+                // Result card with leading color stripe
                 if let risk = result {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(risk.rawValue)
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(risk.color)
+                    HStack(spacing: 0) {
+                        // Leading color stripe
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(risk.color)
+                            .frame(width: 4)
 
-                        Text(risk.body)
-                            .font(.system(size: 12))
-                            .foregroundColor(.primary.opacity(0.85))
-
-                        HStack(spacing: 5) {
-                            Image(systemName: "arrow.right.circle.fill")
-                                .font(.system(size: 11))
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(risk.rawValue)
+                                .font(.system(size: 14, weight: .bold))
                                 .foregroundColor(risk.color)
-                            Text(risk.action)
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(risk.color)
-                        }
 
-                        // Project hint — show when prompt is long and risk is moderate+
-                        if risk != .low && promptText.count > longPromptThreshold {
-                            Divider()
+                            Text(risk.body)
+                                .font(.system(size: 12))
+                                .foregroundColor(.primary.opacity(0.85))
+
                             HStack(spacing: 5) {
-                                Image(systemName: "lightbulb.fill")
-                                    .font(.system(size: 10))
-                                    .foregroundColor(.secondary)
-                                Text("You may be repeating context often. A Claude Project could reduce rework.")
+                                Image(systemName: "arrow.right.circle.fill")
                                     .font(.system(size: 11))
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(risk.color)
+                                Text(risk.action)
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(risk.color)
+                            }
+
+                            // Project hint — show when prompt is long and risk is moderate+
+                            if risk != .low && promptText.count > longPromptThreshold {
+                                Divider()
+                                HStack(spacing: 5) {
+                                    Image(systemName: "lightbulb.fill")
+                                        .font(.system(size: 10))
+                                        .foregroundColor(.secondary)
+                                    Text("You may be repeating context often. A Claude Project could reduce rework.")
+                                        .font(.system(size: 11))
+                                        .foregroundColor(.secondary)
+                                }
                             }
                         }
+                        .padding(12)
                     }
-                    .padding(12)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(
                         RoundedRectangle(cornerRadius: 10)
-                            .fill(risk.color.opacity(0.08))
+                            .fill(risk.color.opacity(0.05))
                     )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .strokeBorder(risk.color.opacity(0.2), lineWidth: 1)
-                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
             }
             .padding(16)

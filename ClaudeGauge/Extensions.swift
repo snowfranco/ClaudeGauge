@@ -67,10 +67,57 @@ struct ThemeConfig {
 
     static func named(_ name: String) -> ThemeConfig {
         switch name {
+        case "clean": return .clean
+        case "dark":  return .dark
         case "newui": return .newUI
         default:      return .newUI
         }
     }
+}
+
+// MARK: - Clean Theme
+
+extension ThemeConfig {
+
+    static let clean = ThemeConfig(
+        name: "clean",
+
+        // Pill: white bg, dark text, accent dot only
+        pillBackground: { _ in
+            AnyShapeStyle(Color.white)
+        },
+        pillCornerRadius: 26,
+        pillTextColor: { _ in Color(hex: "#1A1A1A") },
+        pillDotColor: { accent in accent },
+        pillDotGlowColor: { accent in accent.opacity(0.25) },
+        pillShadow: { _ in
+            (color: Color.black.opacity(0.08), radius: 12, x: 0, y: 4)
+        },
+        pillBorder: { _ in
+            (color: Color.black.opacity(0.06), width: 1)
+        },
+
+        // Expanded card: solid white, soft shadow
+        cardBackground: { _ in
+            AnyShapeStyle(Color.white)
+        },
+        cardCornerRadius: 18,
+        cardBorder: { _ in
+            (color: Color.black.opacity(0.06), width: 1)
+        },
+        cardShadow: { _ in [
+            (color: Color.black.opacity(0.10), radius: 16, x: 0, y: 6)
+        ]},
+        headerTextColor: Color(hex: "#888888"),
+        metadataTextColor: Color(hex: "#999999"),
+        progressTrackColor: Color(hex: "#F0F0F0"),
+        riskCardBackground: { riskColor in
+            AnyShapeStyle(riskColor.opacity(0.06))
+        },
+        badgeStyle: { accent in
+            (textColor: accent, bgColor: accent.opacity(0.10))
+        }
+    )
 }
 
 // MARK: - New UI Theme
@@ -125,6 +172,51 @@ extension ThemeConfig {
         },
         badgeStyle: { accent in
             (textColor: accent, bgColor: accent.opacity(0.12))
+        }
+    )
+}
+
+// MARK: - Dark Theme
+
+extension ThemeConfig {
+
+    static let dark = ThemeConfig(
+        name: "dark",
+
+        // Pill: dark bg, white text, accent dot, subtle accent border
+        pillBackground: { _ in
+            AnyShapeStyle(Color(hex: "#1C1C1E"))
+        },
+        pillCornerRadius: 26,
+        pillTextColor: { _ in Color.white },
+        pillDotColor: { accent in accent },
+        pillDotGlowColor: { accent in accent.opacity(0.3) },
+        pillShadow: { _ in
+            (color: Color.black.opacity(0.3), radius: 12, x: 0, y: 4)
+        },
+        pillBorder: { accent in
+            (color: accent.opacity(0.35), width: 1)
+        },
+
+        // Expanded card: dark solid bg, accent border
+        cardBackground: { _ in
+            AnyShapeStyle(Color(hex: "#1C1C1E"))
+        },
+        cardCornerRadius: 18,
+        cardBorder: { accent in
+            (color: accent.opacity(0.3), width: 1)
+        },
+        cardShadow: { _ in [
+            (color: Color.black.opacity(0.4), radius: 20, x: 0, y: 8)
+        ]},
+        headerTextColor: Color(hex: "#999999"),
+        metadataTextColor: Color(hex: "#888888"),
+        progressTrackColor: Color(hex: "#333333"),
+        riskCardBackground: { riskColor in
+            AnyShapeStyle(riskColor.opacity(0.10))
+        },
+        badgeStyle: { accent in
+            (textColor: accent, bgColor: accent.opacity(0.15))
         }
     )
 }

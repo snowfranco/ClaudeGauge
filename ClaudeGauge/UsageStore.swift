@@ -123,6 +123,36 @@ class UsageStore: ObservableObject {
         return m > 0 ? "Resets in \(h)h \(m)m" : "Resets in \(h)h"
     }
 
+    /// Weekly reset countdown — just the time value (e.g. "18h 5m")
+    var weeklyTimeUntilReset: String {
+        guard let resetDate = weeklyResetsAt else { return "—" }
+        let seconds = Int(resetDate.timeIntervalSinceNow)
+        if seconds <= 0 { return "now" }
+        if seconds < 60 { return "\(seconds)s" }
+        if seconds < 3600 { return "\(seconds / 60)m" }
+        let h = seconds / 3600
+        let m = (seconds % 3600) / 60
+        return m > 0 ? "\(h)h \(m)m" : "\(h)h"
+    }
+
+    /// 5-hour reset countdown — just the time value (e.g. "4h 12m")
+    var resetCountdown: String {
+        guard let resetDate = resetsAt else {
+            switch usagePercent {
+            case 85...: return "~45m"
+            case 70..<85: return "~1.5h"
+            default: return "—"
+            }
+        }
+        let seconds = Int(resetDate.timeIntervalSinceNow)
+        if seconds <= 0 { return "now" }
+        if seconds < 60 { return "\(seconds)s" }
+        if seconds < 3600 { return "\(seconds / 60)m" }
+        let h = seconds / 3600
+        let m = (seconds % 3600) / 60
+        return m > 0 ? "\(h)h \(m)m" : "\(h)h"
+    }
+
     /// Effective color — overrides to red if weekly danger is the primary risk
     var effectiveColor: Color {
         if isWeeklyDanger && usagePercent < 70 { return Color(hex: "#EF4444") }
