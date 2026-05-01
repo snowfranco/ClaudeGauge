@@ -83,7 +83,7 @@ struct SettingsView: View {
                             .font(.system(size: 13, weight: .medium))
 
                         Picker("", selection: $widgetTheme) {
-                            Text("New UI").tag("newui")
+                            Text("Glass").tag("newui")
                             Text("Clean").tag("clean")
                             Text("Dark").tag("dark")
                         }

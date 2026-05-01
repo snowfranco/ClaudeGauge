@@ -6,6 +6,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var floatingWindow: NSWindow?
     var statusItem: NSStatusItem?
     var usageStore = UsageStore()
+    var versionChecker = VersionChecker()
 
     var launchAtLogin: Bool {
         get { SMAppService.mainApp.status == .enabled }
@@ -26,11 +27,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         setupFloatingWidget()
         setupMenuBarItem()
         usageStore.requestNotificationPermission()
+        versionChecker.checkForUpdate()
     }
 
     func setupFloatingWidget() {
         let swiftUIView = FloatingWidgetView()
             .environmentObject(usageStore)
+            .environmentObject(versionChecker)
 
         let hostingView = NSHostingView(rootView: swiftUIView)
 

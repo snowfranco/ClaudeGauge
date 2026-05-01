@@ -169,6 +169,7 @@ struct CompactPillView: View {
 
 struct ExpandedView: View {
     @EnvironmentObject var store: UsageStore
+    @EnvironmentObject var versionChecker: VersionChecker
     @Binding var showSettings: Bool
     @Binding var showPreflight: Bool
     @Binding var isLocked: Bool
@@ -211,6 +212,34 @@ struct ExpandedView: View {
                     Image(systemName: "gearshape")
                         .font(.system(size: 16))
                         .foregroundColor(theme.headerTextColor)
+                }
+                .buttonStyle(.plain)
+            }
+
+            // Update banner
+            if versionChecker.updateAvailable {
+                Button(action: {
+                    if let url = URL(string: versionChecker.downloadURL) {
+                        NSWorkspace.shared.open(url)
+                    }
+                }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "arrow.down.circle.fill")
+                            .font(.system(size: 11))
+                        Text("v\(versionChecker.latestVersion) available")
+                            .font(.system(size: 11, weight: .medium))
+                        Spacer()
+                        Text("Download")
+                            .font(.system(size: 11, weight: .medium))
+                            .underline()
+                    }
+                    .foregroundColor(Color(hex: "#3B82F6"))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color(hex: "#3B82F6").opacity(0.08))
+                    )
                 }
                 .buttonStyle(.plain)
             }

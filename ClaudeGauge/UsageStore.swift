@@ -123,13 +123,22 @@ class UsageStore: ObservableObject {
         return m > 0 ? "Resets in \(h)h \(m)m" : "Resets in \(h)h"
     }
 
-    /// Weekly reset countdown — just the time value (e.g. "18h 5m")
+    /// Weekly reset countdown — days if >24h, hours+minutes otherwise
     var weeklyTimeUntilReset: String {
         guard let resetDate = weeklyResetsAt else { return "—" }
         let seconds = Int(resetDate.timeIntervalSinceNow)
         if seconds <= 0 { return "now" }
         if seconds < 60 { return "\(seconds)s" }
         if seconds < 3600 { return "\(seconds / 60)m" }
+        if seconds >= 86400 {
+            let d = seconds / 86400
+            let h = (seconds % 86400) / 3600
+            let m = (seconds % 3600) / 60
+            if h == 0 && m == 0 { return "\(d)d" }
+            if m == 0 { return "\(d)d \(h)h" }
+            if h == 0 { return "\(d)d \(m)m" }
+            return "\(d)d \(h)h \(m)m"
+        }
         let h = seconds / 3600
         let m = (seconds % 3600) / 60
         return m > 0 ? "\(h)h \(m)m" : "\(h)h"
